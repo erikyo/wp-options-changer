@@ -8,7 +8,9 @@ Author: Erik Yo
 
 // Add menu item to Tools menu
 function options_changer_menu() {
-    add_submenu_page( 'tools.php', 'Options Changer', 'Options Changer', 'manage_options', 'options-changer', 'options_changer_page' );
+    $submenu = add_submenu_page( 'tools.php', 'Options Changer', 'Options Changer', 'manage_options', 'options-changer', 'options_changer_page' );
+
+    add_action( 'admin_print_styles-' . $submenu, 'options_changer_admin_style' );
 }
 
 add_action( 'admin_menu', 'options_changer_menu' );
@@ -19,7 +21,6 @@ function options_changer_admin_style() {
     wp_enqueue_style( 'options-changer-admin', plugin_dir_url( __FILE__ ) . '/style.css' );
 }
 
-add_action( 'admin_enqueue_scripts', 'options_changer_admin_style' );
 
 function isJson( $string ) {
     json_decode( $string );
@@ -42,6 +43,7 @@ function options_changer_page() {
         $option_value = get_option( $option_name );
         if ( ! $option_value ) {
             echo '<div class="error"><p>Option not found!</p></div>';
+            var_dump( $option_value );
         } else {
             if ( is_array( $option_value ) ) {
                 $option_type  = 'array';
@@ -71,14 +73,17 @@ function options_changer_page() {
 
         // Save option to database
         if ( $option_type == 'array' ) {
-            $option_value = explode( "\n", $option_value );
+            $option_value = json_decode( $option_value, true );
+        } elseif ( $option_type == 'object' ) {
+            $option_value = json_decode( $option_value, true );
         } elseif ( $option_type == 'json' ) {
             $option_value = json_encode( $option_value );
         } elseif ( $option_type == 'serialized' ) {
             $option_value = serialize( $option_value );
         }
-        update_option( $option_name, $option_value );
+        // update_option( $option_name, $option_value );
 
+        print_r($option_value);
         echo '<div class="updated"><p>Option saved successfully!</p></div>';
     }
 
