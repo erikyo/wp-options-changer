@@ -27,7 +27,7 @@ Options Changer is a simple WordPress plugin designed to facilitate the fetching
 - WordPress version 5.0 or higher.
 
 ## Screenshots
-![image](https://github.com/erikyo/wp-options-changer/assets/8550908/8d79c565-778e-4bd4-bee4-492ef9d8b356)
+![image](https://github.com/erikyo/wp-options-changer/assets/8550908/5e08a2e3-528f-4dbe-be40-0ae00f5b32e6)
 
 ### Custom Styles
 
