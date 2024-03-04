@@ -31,6 +31,7 @@ function options_changer_admin_style() {
  * Check if the given string is a valid JSON.
  *
  * @param string $string The input string to be checked
+ *
  * @return bool Returns true if the input string is a valid JSON, false otherwise
  */
 function isJson( $string ) {
@@ -43,6 +44,7 @@ function isJson( $string ) {
  * Retrieves the real value of a specified option from the database.
  *
  * @param string $option The name of the option to retrieve.
+ *
  * @return string The value of the specified option, or an empty string if the option is not found.
  */
 function get_real_option_value( $option ) {
@@ -70,6 +72,11 @@ function options_changer_page() {
     // Check if the form has been submitted and the nonce is valid
     if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( $_POST['nonce'], 'options-changer-nonce' ) ) {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+    }
+
+    $unremovable_options = array( 'home', 'blogname', 'blogdescription', 'users_can_register', 'admin_email', 'start_of_week', 'use_balanceTags', 'use_smilies', 'require_name_email', 'comments_notify', 'posts_per_rss', 'rss_use_excerpt', 'mailserver_url', 'mailserver_login', 'mailserver_pass', 'mailserver_port', 'default_category', 'default_comment_status', 'default_ping_status', 'default_pingback_flag', 'posts_per_page', 'date_format', 'time_format', 'links_updated_date_format', 'comment_moderation', 'moderation_notify', 'permalink_structure', 'rewrite_rules', 'hack_file', 'blog_charset', 'moderation_keys', 'active_plugins', 'category_base', 'ping_sites', 'comment_max_links', 'gmt_offset', 'default_email_category', 'recently_edited', 'template', 'stylesheet', 'comment_registration', 'html_type', 'use_trackback', 'default_role', 'db_version', 'uploads_use_yearmonth_folders', 'upload_path', 'blog_public', 'default_link_category', 'show_on_front', 'tag_base', 'show_avatars', 'avatar_rating', 'upload_url_path', 'thumbnail_size_w', 'thumbnail_size_h', 'thumbnail_crop', 'medium_size_w', 'medium_size_h', 'avatar_default', 'large_size_w', 'large_size_h', 'image_default_link_type', 'image_default_size', 'image_default_align', 'close_comments_for_old_posts', 'close_comments_days_old', 'thread_comments', 'thread_comments_depth', 'page_comments', 'comments_per_page', 'default_comments_page', 'comment_order', 'sticky_posts', 'widget_categories', 'widget_text', 'widget_rss', 'uninstall_plugins', 'timezone_string', 'page_for_posts', 'page_on_front', 'default_post_format', 'link_manager_enabled', 'finished_splitting_shared_terms', 'site_icon', 'medium_large_size_w', 'medium_large_size_h', 'wp_page_for_privacy_policy', 'show_comments_cookies_opt_in', 'admin_email_lifespan', 'disallowed_keys', 'comment_previously_approved', 'auto_plugin_theme_update_emails', 'auto_update_core_dev', 'auto_update_core_minor', 'auto_update_core_major', 'wp_force_deactivated_plugins', 'initial_db_version' );
+
+    // Generate a nonce to be used in the form action
     $nonce = wp_create_nonce( 'options-changer-nonce' );
 
     // Get all option names from the database
@@ -80,6 +87,29 @@ function options_changer_page() {
     $option_value = get_real_option_value( $option_name ) ?? '';
 
     $button_color = empty( $option_value ) ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600';
+
+    // remove option from database
+    if ( isset( $_POST['delete_option'] ) ) {
+        if ( $option_value === null ) {
+            echo '<div class="error"><p>Option not found!</p></div>';
+            var_dump( $option_value );
+        } else {
+            $option_name = sanitize_text_field( $_POST['option_name'] );
+
+            if ( strlen( $option_value ) > 1 && is_string( $option_value ) ) {
+                // do not delete wordpress core options
+                if ( in_array( $option_name, $unremovable_options ) ) {
+                    echo '<div class="error"><p>Option ' . $option_name . ' cannot be deleted!</p></div>';
+                } else {
+                    // Delete option from database
+                    if ( delete_option( $option_name ) ) {
+                        echo '<div class="updated"><p>Option ' . $option_name . ' removed successfully!</p></div>';
+                        $option_name  = 'siteurl';
+                    }
+                }
+            }
+        }
+    }
 
     // Fetch option from database
     if ( isset( $_POST['fetch_option'] ) ) {
@@ -157,10 +187,22 @@ function options_changer_page() {
             }
             ?>
         </select>
-        <div class="flex items-center justify-center w-4 h-4 ml-auto mr-1">
-          <button id="fetch_option" name="fetch_option" class="p-2 text-white rounded-full cursor-pointer hover:bg-blue-600">
-            <svg class="w-4 h-4 rotate-90 rtl:-rotate-90" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
-              <path d="m17.914 18.594-8-18a1 1 0 0 0-1.828 0l-8 18a1 1 0 0 0 1.157 1.376L8 18.281V9a1 1 0 0 1 2 0v9.281l6.758 1.689a1 1 0 0 0 1.156-1.376Z"/>
+
+        <!-- delete option button -->
+        <div class="flex items-center justify-center w-4 h-4 ml-auto mr-4">
+          <button id="delete_option" name="delete_option" onclick="return confirm('Are you sure to delete this option?');" class="p-2 text-white rounded-full cursor-pointer bg-red-600 hover:bg-red-400">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" class="fill-white">
+                <path d="M0 0h24v24H0z" fill="none"/><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+            <span class="sr-only">Delete</span>
+          </button>
+        </div>
+
+        <!-- Fetch option button -->
+        <div class="flex items-center justify-center w-4 h-4 ml-4 mr-1">
+          <button id="fetch_option" name="fetch_option" class="p-2 text-white rounded-full cursor-pointer bg-indigo-600 hover:bg-blue-400">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" class="fill-white">
+              <path d="M0 0h24v24H0z" fill="none"/><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
             </svg>
             <span class="sr-only">Update</span>
           </button>
