@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "style": "npx tailwindcss -i style-dev.css -o style.css --watch"
+    "style": "npx tailwindcss -i style-dev.css -o style.css --watch",
+    "build": "npx tailwindcss -i style-dev.css -o style.css --minify"
   },
   "author": "",
   "license": "ISC",

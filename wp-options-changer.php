@@ -67,6 +67,11 @@ function options_changer_page() {
         wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
     }
 
+    // Check if the form has been submitted and the nonce is valid
+    if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( $_POST['nonce'], 'options-changer-nonce' ) ) {
+        wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+    $nonce = wp_create_nonce( 'options-changer-nonce' );
+
     // Get all option names from the database
     $all_options  = wp_load_alloptions();
     $option_names = array_keys( $all_options );
@@ -131,6 +136,7 @@ function options_changer_page() {
     <form method="post" action="" class="flex flex-col">
       <!--the type of option (array, object, string, json, serialized)-->
       <input type="hidden" value="<?php echo $option_type; ?>" name="option_type"/>
+      <input type="hidden" value="<?php echo $nonce; ?>" name="nonce"/>
 
       <!-- the options name -->
       <div class="flex items-center w-full px-3 py-3 mt-4 rounded-t-lg bg-blue-500 shadow-lg">
